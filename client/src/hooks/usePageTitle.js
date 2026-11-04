@@ -5,6 +5,9 @@ const TITLES = {
   '/intelligence': 'Historical Intelligence',
   '/resources': 'Citizen Resources',
   '/about': 'About and Contact',
+  '/profile': 'My Profile',
+  '/login': 'Log in',
+  '/register': 'Register',
 };
 
 /** Sets a meaningful document title for each route (helps tabs, history and screen readers). */
