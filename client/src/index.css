@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   SATYA SETU design tokens (Tailwind 4 @theme)
+   These generate utilities such as bg-midnight, text-electric,
+   border-navy, font-serif, etc.
+------------------------------------------------------------------- */
+@theme {
+  --color-midnight: #101827;
+  --color-navy: #17243a;
+  --color-electric: #1685ff;
+  --color-cyan: #38bdf8;
+  --color-amber: #f59e0b;
+  --color-paper: #f7f9fc;
+
+  /* Supporting neutrals for editorial pages */
+  --color-ink: #1b2437;
+  --color-muted: #5b667a;
+  --color-line: #e2e8f0;
+
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, "Times New Roman", serif;
+
+  --shadow-card: 0 1px 2px rgb(16 24 39 / 0.04), 0 8px 24px -8px rgb(16 24 39 / 0.12);
+  --shadow-glow: 0 0 0 1px rgb(56 189 248 / 0.25), 0 10px 40px -10px rgb(22 133 255 / 0.45);
+}
+
+/* ------------------------------------------------------------------
+   Base styles
+------------------------------------------------------------------- */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  ::selection {
+    background: rgb(22 133 255 / 0.2);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-electric);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Reusable component classes
+------------------------------------------------------------------- */
+@layer components {
+  .container-page {
+    width: 100%;
+    max-width: 80rem; /* 1280px */
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .container-page {
+      padding-inline: 1.5rem;
+    }
+  }
+  @media (min-width: 1024px) {
+    .container-page {
+      padding-inline: 2rem;
+    }
+  }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-electric);
+  }
+
+  .grid-backdrop {
+    background-image:
+      linear-gradient(rgb(56 189 248 / 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(56 189 248 / 0.06) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

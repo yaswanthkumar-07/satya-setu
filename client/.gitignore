@@ -1,0 +1,26 @@
+@'
+# Dependencies
+node_modules/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Uploads
+**/uploads/*
+!**/uploads/.gitkeep
+
+# Editor and OS files
+.vscode/
+.DS_Store
+Thumbs.db
+'@ | Set-Content .gitignore
