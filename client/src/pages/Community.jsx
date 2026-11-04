@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AlertTriangle, X } from 'lucide-react';
 import CommunityHeader from '../components/community/CommunityHeader';
 import Composer from '../components/community/Composer';
@@ -6,15 +7,21 @@ import FilterBar from '../components/community/FilterBar';
 import ReportFeed from '../components/community/ReportFeed';
 import PendingSubmissions from '../components/community/PendingSubmissions';
 import CommunitySidebar from '../components/community/CommunitySidebar';
-import CreateReportModal from '../components/community/CreateReportModal';
+import CreateReportSection from '../components/community/CreateReportSection';
 import ReportContentModal from '../components/community/ReportContentModal';
+import DemoNotice from '../components/ui/DemoNotice';
 import { useReports } from '../hooks/useReports';
 import { PAGE_SIZE } from '../data/communityData';
+import { ENV } from '../utils/constants';
 import {
   DEFAULT_FILTERS,
   countActiveFilters,
   filterAndSortReports,
 } from '../utils/reportFilters';
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' &&
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 export default function Community() {
   const {
@@ -28,6 +35,7 @@ export default function Community() {
     actionError,
     clearActionError,
     reload,
+    clearLocalData,
     toggleUpvote,
     addComment,
     flagComment,
@@ -36,10 +44,61 @@ export default function Community() {
     withdrawPending,
   } = useReports();
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [visible, setVisible] = useState(PAGE_SIZE);
-  const [createOpen, setCreateOpen] = useState(false);
   const [flagTarget, setFlagTarget] = useState(null);
+
+  // Every "create a report" button bumps this counter. The effect below scrolls
+  // to the form once the feed has finished loading, so the page height is
+  // final and the scroll lands in the right place.
+  const [scrollTick, setScrollTick] = useState(0);
+  const handledTickRef = useRef(0);
+
+  const openCreate = () => setScrollTick((t) => t + 1);
+
+  useEffect(() => {
+    if (scrollTick === 0 || loading) return;
+    if (handledTickRef.current === scrollTick) return;
+    handledTickRef.current = scrollTick;
+
+    const reduce = prefersReducedMotion();
+    requestAnimationFrame(() => {
+      document
+        .getElementById('create-report')
+        ?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      // Put the cursor in the Title field once the scroll has (mostly) finished
+      setTimeout(
+        () => document.getElementById('rpt-title')?.focus({ preventScroll: true }),
+        reduce ? 0 : 600,
+      );
+    });
+  }, [scrollTick, loading]);
+
+  // "Report an Issue" in the navbar and "Share a concern" on the Home page link to
+  // /community?new=1. Scroll to the form, then remove the parameter so a
+  // refresh does not repeat it.
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setScrollTick((t) => t + 1);
+      const next = new URLSearchParams(searchParams);
+      next.delete('new');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  // After "Done" or "Cancel" in the form, go back up to the user's pending reports.
+  const handleFormFinished = () => {
+    const reduce = prefersReducedMotion();
+    requestAnimationFrame(() => {
+      const target = document.getElementById('awaiting-moderation');
+      if (target) {
+        target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+      } else {
+        window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+      }
+    });
+  };
 
   const matches = useMemo(() => filterAndSortReports(reports, filters), [reports, filters]);
   const shown = matches.slice(0, visible);
@@ -55,7 +114,11 @@ export default function Community() {
     setVisible(PAGE_SIZE);
   };
 
-  const openCreate = () => setCreateOpen(true);
+  const handleClearLocal = () => {
+    if (window.confirm('Remove the reports and comments you added in this browser?')) {
+      clearLocalData();
+    }
+  };
 
   return (
     <>
@@ -80,6 +143,20 @@ export default function Community() {
                   <X className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
+            )}
+
+            {ENV.USE_DEMO_DATA && (
+              <DemoNotice>
+                <strong>Demo mode.</strong> Reports and comments you add are saved only in this
+                browser (local storage). They are not shared with other users or devices.{' '}
+                <button
+                  type="button"
+                  onClick={handleClearLocal}
+                  className="font-semibold underline underline-offset-2 hover:no-underline"
+                >
+                  Clear my demo data
+                </button>
+              </DemoNotice>
             )}
 
             <Composer onCreate={openCreate} />
@@ -120,11 +197,7 @@ export default function Community() {
         </div>
       </section>
 
-      <CreateReportModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onSubmit={submitReport}
-      />
+      <CreateReportSection onSubmit={submitReport} onFinished={handleFormFinished} />
 
       <ReportContentModal
         report={flagTarget}

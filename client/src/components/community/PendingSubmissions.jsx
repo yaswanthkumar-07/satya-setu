@@ -5,21 +5,22 @@ import { timeAgo } from '../../utils/format';
 
 /**
  * Shows the user's own submissions that are waiting for moderation.
- * These are NOT in the public feed.
+ * These are NOT in the public feed and are never shown as verified.
  */
 export default function PendingSubmissions({ items, onWithdraw }) {
   if (!items.length) return null;
 
   return (
-    <Card className="border-blue-200 p-5">
+    <Card id="awaiting-moderation" className="border-blue-200 p-5">
       <div className="flex items-center gap-2">
         <Clock className="h-4 w-4 text-electric" aria-hidden="true" />
         <h2 className="font-sans text-base font-semibold text-midnight">
-          Your submissions awaiting moderation
+          Awaiting moderation ({items.length})
         </h2>
       </div>
       <p className="mt-1 text-xs text-muted">
-        Only you can see these. Nothing is published until moderators have reviewed it.
+        Your submissions. Only you can see these, in this browser. Nothing is published until
+        moderators have reviewed it.
       </p>
 
       <ul className="mt-4 divide-y divide-line">
@@ -28,7 +29,7 @@ export default function PendingSubmissions({ items, onWithdraw }) {
             <div className="min-w-0">
               <p className="break-words text-sm font-semibold text-midnight">{item.title}</p>
               <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-muted">
-                <Badge tone="blue">Pending moderation</Badge>
+                <Badge tone="blue">Awaiting moderation</Badge>
                 <span>
                   {item.district}, {item.state}
                 </span>

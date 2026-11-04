@@ -1,6 +1,7 @@
 import { ArrowRight, Landmark } from 'lucide-react';
 import Button from '../ui/Button';
 import Reveal from '../ui/Reveal';
+import { REPORT_ISSUE_PATH } from '../../utils/constants';
 
 export default function CallToAction() {
   return (
@@ -18,7 +19,7 @@ export default function CallToAction() {
                 official authority that can act.
               </p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-                <Button to="/community" size="lg" variant="amber" icon={ArrowRight}>
+                <Button to={REPORT_ISSUE_PATH} size="lg" variant="amber" icon={ArrowRight}>
                   Share a concern
                 </Button>
                 <Button to="/resources" size="lg" variant="onDark" icon={Landmark} iconPosition="left">

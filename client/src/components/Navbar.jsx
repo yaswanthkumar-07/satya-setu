@@ -3,11 +3,14 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import Logo from './Logo';
-import { NAV_LINKS } from '../utils/constants';
+import { NAV_LINKS, REPORT_ISSUE_PATH } from '../utils/constants';
 
 /**
  * Sticky, responsive navigation.
  * variant: "light" (editorial pages) | "dark" (intelligence dashboard)
+ *
+ * "Report an Issue" goes to /community?new=1, and the Community page opens the
+ * report form when it sees that parameter.
  */
 export default function Navbar({ variant = 'light' }) {
   const [open, setOpen] = useState(false);
@@ -15,10 +18,11 @@ export default function Navbar({ variant = 'light' }) {
   const location = useLocation();
   const isDark = variant === 'dark';
 
-  // Close the mobile menu whenever the route changes
+  // Close the mobile menu whenever the route or query changes
+  // (so it also closes when "Report an Issue" is tapped while already on /community)
   useEffect(() => {
     setOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   // Add a shadow/blur once the page is scrolled
   useEffect(() => {
@@ -84,7 +88,7 @@ export default function Navbar({ variant = 'light' }) {
         {/* Desktop CTA */}
         <div className="hidden lg:block">
           <Link
-            to="/community"
+            to={REPORT_ISSUE_PATH}
             className="inline-flex items-center gap-2 rounded-xl bg-electric px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-electric/90 hover:shadow-glow"
           >
             Report an Issue
@@ -144,7 +148,7 @@ export default function Navbar({ variant = 'light' }) {
               ))}
               <li className="pt-2">
                 <Link
-                  to="/community"
+                  to={REPORT_ISSUE_PATH}
                   className="flex items-center justify-center gap-2 rounded-xl bg-electric px-4 py-3 text-sm font-semibold text-white"
                 >
                   Report an Issue

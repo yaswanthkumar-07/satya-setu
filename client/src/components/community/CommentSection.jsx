@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Flag, Send, User } from 'lucide-react';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
@@ -8,14 +8,21 @@ import { getErrorMessage } from '../../services/api';
 
 const MAX_LENGTH = 500;
 
+function fullDate(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
 export default function CommentSection({ id, comments, onAdd, onFlag }) {
   const [text, setText] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false); // blocks double-clicks before React re-renders
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (busy) return;
+    if (busyRef.current) return;
     const value = text.trim();
 
     if (value.length < 3) {
@@ -28,6 +35,7 @@ export default function CommentSection({ id, comments, onAdd, onFlag }) {
       return;
     }
 
+    busyRef.current = true;
     setBusy(true);
     try {
       await onAdd(value);
@@ -36,6 +44,7 @@ export default function CommentSection({ id, comments, onAdd, onFlag }) {
     } catch (err) {
       setError(getErrorMessage(err, 'Your comment could not be posted. Please try again.'));
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   };
@@ -55,7 +64,9 @@ export default function CommentSection({ id, comments, onAdd, onFlag }) {
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
                   <span className="font-semibold text-ink">{c.author}</span>
                   {c.isDemo && <Badge tone="amber">Demo</Badge>}
-                  <span>{timeAgo(c.createdAt)}</span>
+                  <time dateTime={c.createdAt} title={fullDate(c.createdAt)}>
+                    {timeAgo(c.createdAt)}
+                  </time>
                 </div>
 
                 {c.flagged ? (
