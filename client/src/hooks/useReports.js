@@ -101,19 +101,26 @@ export function useReports() {
         setFlaggedReportIds(demo.flaggedReportIds);
       } else {
         const items = await reportsService.list({ signal });
-        const nextReports = [];
-        const nextComments = {};
+const nextReports = [];
+const nextComments = {};
 
-        items.forEach((raw) => {
-          const report = normalizeReport(raw);
-          if (!report.id) return;
-          const comments = Array.isArray(raw.comments) ? raw.comments.map(normalizeComment) : [];
-          nextComments[report.id] = comments;
-          nextReports.push({
-            ...report,
-            commentCount: raw.commentCount ?? comments.length,
-          });
-        });
+for (const raw of items) {
+  const report = normalizeReport(raw);
+
+  if (!report.id) continue;
+
+  const comments = await reportsService.listComments(report.id, { signal });
+
+  nextComments[report.id] = comments;
+
+  nextReports.push({
+    ...report,
+    commentCount: comments.length,
+  });
+}
+
+setReports(nextReports);
+setCommentsByReport(nextComments);
 
         setReports(nextReports);
         setCommentsByReport(nextComments);

@@ -13,10 +13,10 @@ import {
   UserPlus,
   X,
 } from 'lucide-react';
+
 import Logo from './Logo';
 import UserAvatar, { getDisplayName } from './UserAvatar';
 import { useAuth } from '../contexts/AuthContext';
-import { logoutUser } from '../firebase/auth';
 import { NAV_LINKS, REPORT_ISSUE_PATH } from '../utils/constants';
 
 const ACCOUNT_LINKS = [
@@ -26,7 +26,7 @@ const ACCOUNT_LINKS = [
 ];
 
 /**
- * Sticky, responsive navigation with Firebase auth state.
+ * Sticky, responsive navigation with Satya Setu authentication state.
  * variant: "light" (editorial pages) | "dark" (intelligence dashboard)
  *
  * - Signed out: Login and Register actions.
@@ -40,26 +40,26 @@ export default function Navbar({ variant = 'light' }) {
   const [accountOpen, setAccountOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState('');
+
   const accountRef = useRef(null);
 
   const location = useLocation();
   const navigate = useNavigate();
   const isDark = variant === 'dark';
 
-  // Auth state comes from the existing AuthContext, so the navbar updates the
-  // moment Firebase reports a sign-in or sign-out.
+  // Authentication state comes from the Satya Setu AuthContext.
   const auth = useAuth();
   const user = auth?.user ?? null;
   const authLoading = Boolean(auth?.loading);
   const displayName = getDisplayName(user);
 
-  // Close menus whenever the route, query or hash changes
+  // Close menus whenever the route, query or hash changes.
   useEffect(() => {
     setOpen(false);
     setAccountOpen(false);
   }, [location.pathname, location.search, location.hash]);
 
-  // Close the dropdown if the user signs out from anywhere
+  // Close the dropdown if the user signs out from anywhere.
   useEffect(() => {
     if (!user) {
       setAccountOpen(false);
@@ -67,36 +67,48 @@ export default function Navbar({ variant = 'light' }) {
     }
   }, [user]);
 
-  // Add a shadow/blur once the page is scrolled
+  // Add a shadow/blur once the page is scrolled.
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
+
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
+
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Lock body scroll while the mobile menu is open
+  // Lock body scroll while the mobile menu is open.
   useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
+
     return () => {
       document.body.style.overflow = '';
     };
   }, [open]);
 
-  // Dropdown: close on outside click and on Escape
+  // Dropdown: close on outside click and on Escape.
   useEffect(() => {
     if (!accountOpen) return undefined;
 
     const onPointer = (event) => {
-      if (accountRef.current && !accountRef.current.contains(event.target)) setAccountOpen(false);
+      if (
+        accountRef.current &&
+        !accountRef.current.contains(event.target)
+      ) {
+        setAccountOpen(false);
+      }
     };
+
     const onKey = (event) => {
-      if (event.key === 'Escape') setAccountOpen(false);
+      if (event.key === 'Escape') {
+        setAccountOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', onPointer);
     document.addEventListener('touchstart', onPointer, { passive: true });
     document.addEventListener('keydown', onKey);
+
     return () => {
       document.removeEventListener('mousedown', onPointer);
       document.removeEventListener('touchstart', onPointer);
@@ -104,12 +116,15 @@ export default function Navbar({ variant = 'light' }) {
     };
   }, [accountOpen]);
 
-  const handleLogout = async () => {
+  // Log out using the Satya Setu authentication context.
+  const handleLogout = () => {
     if (loggingOut) return;
+
     setLoggingOut(true);
     setLogoutError('');
+
     try {
-      await logoutUser();
+      auth.logout();
       setAccountOpen(false);
       setOpen(false);
       navigate('/login', { replace: true });
@@ -121,19 +136,34 @@ export default function Navbar({ variant = 'light' }) {
   };
 
   const shell = isDark
-    ? `border-b border-white/10 ${scrolled ? 'bg-midnight/90 backdrop-blur-md' : 'bg-midnight'}`
-    : `border-b border-line ${scrolled ? 'bg-white/85 backdrop-blur-md shadow-sm' : 'bg-paper/90 backdrop-blur'}`;
+    ? `border-b border-white/10 ${
+        scrolled ? 'bg-midnight/90 backdrop-blur-md' : 'bg-midnight'
+      }`
+    : `border-b border-line ${
+        scrolled
+          ? 'bg-white/85 backdrop-blur-md shadow-sm'
+          : 'bg-paper/90 backdrop-blur'
+      }`;
 
   const linkClass = ({ isActive }) => {
-    const base = 'relative rounded-lg px-3 py-2 text-sm font-medium transition-colors';
+    const base =
+      'relative rounded-lg px-3 py-2 text-sm font-medium transition-colors';
+
     if (isDark) {
-      return `${base} ${isActive ? 'text-cyan' : 'text-slate-300 hover:text-white'}`;
+      return `${base} ${
+        isActive ? 'text-cyan' : 'text-slate-300 hover:text-white'
+      }`;
     }
-    return `${base} ${isActive ? 'text-electric' : 'text-ink/80 hover:text-midnight'}`;
+
+    return `${base} ${
+      isActive ? 'text-electric' : 'text-ink/80 hover:text-midnight'
+    }`;
   };
 
   const loginClass = `rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-    isDark ? 'text-slate-200 hover:text-white' : 'text-ink/80 hover:text-midnight'
+    isDark
+      ? 'text-slate-200 hover:text-white'
+      : 'text-ink/80 hover:text-midnight'
   }`;
 
   const registerClass = `inline-flex items-center rounded-xl border px-4 py-2 text-sm font-semibold transition ${
@@ -143,7 +173,9 @@ export default function Navbar({ variant = 'light' }) {
   }`;
 
   const mobileRow = `flex w-full items-center gap-3 rounded-lg px-3 py-3 text-base font-medium ${
-    isDark ? 'text-slate-200 hover:bg-white/5' : 'text-ink hover:bg-midnight/5'
+    isDark
+      ? 'text-slate-200 hover:bg-white/5'
+      : 'text-ink hover:bg-midnight/5'
   }`;
 
   return (
@@ -158,17 +190,26 @@ export default function Navbar({ variant = 'light' }) {
         <ul className="hidden items-center gap-1 lg:flex">
           {NAV_LINKS.map((link) => (
             <li key={link.to}>
-              <NavLink to={link.to} end={link.to === '/'} className={linkClass}>
+              <NavLink
+                to={link.to}
+                end={link.to === '/'}
+                className={linkClass}
+              >
                 {({ isActive }) => (
                   <>
                     {link.label}
+
                     {isActive && (
                       <motion.span
                         layoutId="nav-underline"
                         className={`absolute inset-x-3 -bottom-px h-0.5 rounded-full ${
                           isDark ? 'bg-cyan' : 'bg-electric'
                         }`}
-                        transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 380,
+                          damping: 32,
+                        }}
                       />
                     )}
                   </>
@@ -182,7 +223,9 @@ export default function Navbar({ variant = 'light' }) {
         <div className="hidden items-center gap-2 lg:flex">
           {authLoading ? (
             <span
-              className={`h-9 w-28 animate-pulse rounded-xl ${isDark ? 'bg-white/10' : 'bg-slate-200/70'}`}
+              className={`h-9 w-28 animate-pulse rounded-xl ${
+                isDark ? 'bg-white/10' : 'bg-slate-200/70'
+              }`}
               aria-hidden="true"
             />
           ) : user ? (
@@ -198,6 +241,7 @@ export default function Navbar({ variant = 'light' }) {
                 }`}
               >
                 <UserAvatar user={user} />
+
                 <span
                   className={`hidden max-w-[8rem] truncate text-sm font-semibold xl:inline ${
                     isDark ? 'text-white' : 'text-midnight'
@@ -205,8 +249,11 @@ export default function Navbar({ variant = 'light' }) {
                 >
                   {displayName}
                 </span>
+
                 <ChevronDown
-                  className={`h-4 w-4 transition-transform ${accountOpen ? 'rotate-180' : ''} ${
+                  className={`h-4 w-4 transition-transform ${
+                    accountOpen ? 'rotate-180' : ''
+                  } ${
                     isDark ? 'text-slate-300' : 'text-slate-500'
                   }`}
                   aria-hidden="true"
@@ -225,11 +272,20 @@ export default function Navbar({ variant = 'light' }) {
                     className="absolute right-0 top-full z-50 mt-2 w-64 origin-top-right overflow-hidden rounded-2xl border border-line bg-white shadow-card"
                   >
                     <div className="flex items-center gap-3 border-b border-line px-4 py-3">
-                      <UserAvatar user={user} className="h-10 w-10" />
+                      <UserAvatar
+                        user={user}
+                        className="h-10 w-10"
+                      />
+
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-midnight">{displayName}</p>
+                        <p className="truncate text-sm font-semibold text-midnight">
+                          {displayName}
+                        </p>
+
                         {user.email && (
-                          <p className="truncate text-xs text-muted">{user.email}</p>
+                          <p className="truncate text-xs text-muted">
+                            {user.email}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -243,7 +299,10 @@ export default function Navbar({ variant = 'light' }) {
                           onClick={() => setAccountOpen(false)}
                           className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-ink transition hover:bg-electric/10 hover:text-electric"
                         >
-                          <Icon className="h-4 w-4" aria-hidden="true" />
+                          <Icon
+                            className="h-4 w-4"
+                            aria-hidden="true"
+                          />
                           {label}
                         </Link>
                       ))}
@@ -257,11 +316,18 @@ export default function Navbar({ variant = 'light' }) {
                         disabled={loggingOut}
                         className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-60"
                       >
-                        <LogOut className="h-4 w-4" aria-hidden="true" />
+                        <LogOut
+                          className="h-4 w-4"
+                          aria-hidden="true"
+                        />
                         {loggingOut ? 'Logging out…' : 'Logout'}
                       </button>
+
                       {logoutError && (
-                        <p role="alert" className="px-3 pb-2 pt-1 text-xs font-medium text-red-600">
+                        <p
+                          role="alert"
+                          className="px-3 pb-2 pt-1 text-xs font-medium text-red-600"
+                        >
                           {logoutError}
                         </p>
                       )}
@@ -275,6 +341,7 @@ export default function Navbar({ variant = 'light' }) {
               <Link to="/login" className={loginClass}>
                 Login
               </Link>
+
               <Link to="/register" className={registerClass}>
                 Register
               </Link>
@@ -298,10 +365,16 @@ export default function Navbar({ variant = 'light' }) {
           aria-controls="mobile-menu"
           aria-label={open ? 'Close menu' : 'Open menu'}
           className={`inline-flex h-10 w-10 items-center justify-center rounded-lg lg:hidden ${
-            isDark ? 'text-white hover:bg-white/10' : 'text-midnight hover:bg-midnight/5'
+            isDark
+              ? 'text-white hover:bg-white/10'
+              : 'text-midnight hover:bg-midnight/5'
           }`}
         >
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {open ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Menu className="h-6 w-6" />
+          )}
         </button>
       </nav>
 
@@ -316,7 +389,9 @@ export default function Navbar({ variant = 'light' }) {
             transition={{ duration: 0.25, ease: 'easeOut' }}
             className={`overflow-hidden lg:hidden ${
               isDark ? 'bg-midnight' : 'bg-white'
-            } border-t ${isDark ? 'border-white/10' : 'border-line'}`}
+            } border-t ${
+              isDark ? 'border-white/10' : 'border-line'
+            }`}
           >
             <div className="max-h-[calc(100vh-4rem)] overflow-y-auto">
               <ul className="container-page flex flex-col gap-1 py-4">
@@ -345,12 +420,18 @@ export default function Navbar({ variant = 'light' }) {
                 {/* Account options (mobile) */}
                 {!authLoading && (
                   <li
-                    className={`mt-2 border-t pt-3 ${isDark ? 'border-white/10' : 'border-line'}`}
+                    className={`mt-2 border-t pt-3 ${
+                      isDark ? 'border-white/10' : 'border-line'
+                    }`}
                   >
                     {user ? (
                       <>
                         <div className="flex items-center gap-3 px-3 pb-2">
-                          <UserAvatar user={user} className="h-10 w-10" />
+                          <UserAvatar
+                            user={user}
+                            className="h-10 w-10"
+                          />
+
                           <div className="min-w-0">
                             <p
                               className={`truncate text-sm font-semibold ${
@@ -359,6 +440,7 @@ export default function Navbar({ variant = 'light' }) {
                             >
                               {displayName}
                             </p>
+
                             {user.email && (
                               <p
                                 className={`truncate text-xs ${
@@ -372,28 +454,48 @@ export default function Navbar({ variant = 'light' }) {
                         </div>
 
                         <ul className="flex flex-col gap-1">
-                          {ACCOUNT_LINKS.map(({ label, to, icon: Icon }) => (
-                            <li key={label}>
-                              <Link to={to} className={mobileRow}>
-                                <Icon className="h-5 w-5" aria-hidden="true" />
-                                {label}
-                              </Link>
-                            </li>
-                          ))}
+                          {ACCOUNT_LINKS.map(
+                            ({ label, to, icon: Icon }) => (
+                              <li key={label}>
+                                <Link
+                                  to={to}
+                                  className={mobileRow}
+                                >
+                                  <Icon
+                                    className="h-5 w-5"
+                                    aria-hidden="true"
+                                  />
+                                  {label}
+                                </Link>
+                              </li>
+                            ),
+                          )}
+
                           <li>
                             <button
                               type="button"
                               onClick={handleLogout}
                               disabled={loggingOut}
                               className={`${mobileRow} text-red-500 disabled:opacity-60 ${
-                                isDark ? 'hover:bg-red-500/10' : 'hover:bg-red-50'
+                                isDark
+                                  ? 'hover:bg-red-500/10'
+                                  : 'hover:bg-red-50'
                               }`}
                             >
-                              <LogOut className="h-5 w-5" aria-hidden="true" />
-                              {loggingOut ? 'Logging out…' : 'Logout'}
+                              <LogOut
+                                className="h-5 w-5"
+                                aria-hidden="true"
+                              />
+                              {loggingOut
+                                ? 'Logging out…'
+                                : 'Logout'}
                             </button>
+
                             {logoutError && (
-                              <p role="alert" className="px-3 pt-1 text-xs font-medium text-red-500">
+                              <p
+                                role="alert"
+                                className="px-3 pt-1 text-xs font-medium text-red-500"
+                              >
                                 {logoutError}
                               </p>
                             )}
@@ -410,9 +512,13 @@ export default function Navbar({ variant = 'light' }) {
                               : 'border-line text-midnight hover:border-electric hover:text-electric'
                           }`}
                         >
-                          <LogIn className="h-4 w-4" aria-hidden="true" />
+                          <LogIn
+                            className="h-4 w-4"
+                            aria-hidden="true"
+                          />
                           Login
                         </Link>
+
                         <Link
                           to="/register"
                           className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold ${
@@ -421,7 +527,10 @@ export default function Navbar({ variant = 'light' }) {
                               : 'border-line text-midnight hover:border-electric hover:text-electric'
                           }`}
                         >
-                          <UserPlus className="h-4 w-4" aria-hidden="true" />
+                          <UserPlus
+                            className="h-4 w-4"
+                            aria-hidden="true"
+                          />
                           Register
                         </Link>
                       </div>
@@ -435,7 +544,10 @@ export default function Navbar({ variant = 'light' }) {
                     className="flex items-center justify-center gap-2 rounded-xl bg-electric px-4 py-3 text-sm font-semibold text-white"
                   >
                     Report an Issue
-                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                    <ArrowRight
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    />
                   </Link>
                 </li>
               </ul>

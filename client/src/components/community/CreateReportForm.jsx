@@ -117,38 +117,48 @@ export default function CreateReportForm({ onSubmit, onClose }) {
     });
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    if (submitting) return;
+  const handleSubmit = async (event) => {
+  event.preventDefault();
 
-    const found = validate(values);
-    setErrors(found);
-    if (Object.keys(found).length > 0) {
-      summaryRef.current?.focus();
-      return;
-    }
+  if (submitting) return;
 
-    setSubmitting(true);
-    timerRef.current = setTimeout(() => {
-      const item = onSubmit({
-        title: values.title.trim(),
-        summary: values.description.trim(),
-        category: values.category,
-        sector: values.sector,
-        state: values.state,
-        district: values.district,
-        locality: values.locality.trim(),
-        organisation: values.organisation.trim(),
-        incidentDate: values.incidentDate || null,
-        media: {
-          images: media.filter((m) => m.kind === 'image').length,
-          videos: media.filter((m) => m.kind === 'video').length,
-        },
-      });
-      setSubmitted(item);
-      setSubmitting(false);
-    }, 700);
-  };
+  const found = validate(values);
+  setErrors(found);
+
+  if (Object.keys(found).length > 0) {
+    summaryRef.current?.focus();
+    return;
+  }
+
+  setSubmitting(true);
+
+  try {
+    const item = await onSubmit({
+      title: values.title.trim(),
+      summary: values.description.trim(),
+      category: values.category,
+      sector: values.sector,
+      state: values.state,
+      district: values.district,
+      locality: values.locality.trim(),
+      organisation: values.organisation.trim(),
+      incidentDate: values.incidentDate || null,
+      media: {
+        images: media.filter((m) => m.kind === 'image').length,
+        videos: media.filter((m) => m.kind === 'video').length,
+      },
+    });
+
+    setSubmitted(item);
+  } catch (error) {
+    setErrors((prev) => ({
+      ...prev,
+      submit: error.message || 'Unable to submit report. Please try again.',
+    }));
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   if (submitted) return <SuccessView report={submitted} onClose={onClose} />;
 

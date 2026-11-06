@@ -7,10 +7,10 @@ const toCount = (value) => Math.max(0, Number(value) || 0);
 /** Converts an API comment (Mongo-style or not) to the shape the UI expects. */
 export function normalizeComment(raw) {
   return {
-    id: toId(raw),
-    author: raw.author || 'Anonymous citizen',
-    text: String(raw.text ?? ''),
-    createdAt: raw.createdAt ?? new Date().toISOString(),
+    id: String(raw.id ?? raw._id ?? raw.commentId ?? ''),
+    author: raw.author ?? raw.user_name ?? 'Anonymous citizen',
+    text: String(raw.text ?? raw.comment ?? ''),
+    createdAt: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
     isDemo: Boolean(raw.isDemo),
     flagged: false,
   };
@@ -42,13 +42,37 @@ export function normalizeReport(raw) {
 
 export const reportsService = {
   async list({ signal } = {}) {
-    const items = unwrap(await api.get('/reports', { signal }));
-    return Array.isArray(items) ? items : [];
-  },
+  const response = unwrap(await api.get('/reports', { signal }));
+  return Array.isArray(response) ? response : response.reports ?? [];
+},
 
   async create(payload) {
-    return unwrap(await api.post('/reports', payload));
-  },
+  const location = [
+    payload.locality,
+    payload.district,
+    payload.state,
+  ].filter(Boolean).join(', ');
+
+  const response = unwrap(
+    await api.post('/reports', {
+      title: payload.title,
+      description: payload.summary,
+      category: payload.category,
+      location,
+    })
+  );
+
+  return {
+    id: response.reportId,
+    title: payload.title,
+    description: payload.summary,
+    summary: payload.summary,
+    category: payload.category,
+    location,
+    status: 'Pending',
+    created_at: new Date().toISOString(),
+  };
+},
 
   async withdraw(id) {
     await api.delete(`/reports/${encodeURIComponent(id)}`);
@@ -59,10 +83,33 @@ export const reportsService = {
     if (on) await api.post(url);
     else await api.delete(url);
   },
+    async listComments(reportId, { signal } = {}) {
+    const response = unwrap(
+      await api.get(`/comments/report/${encodeURIComponent(reportId)}`, { signal })
+    );
 
-  async addComment(reportId, text) {
-    return unwrap(await api.post(`/reports/${encodeURIComponent(reportId)}/comments`, { text }));
+    const items = Array.isArray(response)
+      ? response
+      : response.comments ?? [];
+
+    return items.map(normalizeComment);
   },
+  async addComment(reportId, text, userName = 'Anonymous citizen') {
+  const response = unwrap(
+    await api.post('/comments', {
+      report_id: reportId,
+      user_name: userName,
+      comment: text,
+    })
+  );
+
+  return {
+    id: response.commentId,
+    author: userName,
+    text,
+    createdAt: new Date().toISOString(),
+  };
+},
 
   async flagComment(reportId, commentId) {
     await api.post(

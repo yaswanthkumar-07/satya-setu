@@ -68,6 +68,26 @@ export const api = axios.create({
   headers: { Accept: 'application/json' },
 });
 
+// Attach the saved JWT token to API requests
+api.interceptors.request.use((config) => {
+  const savedAuth = sessionStorage.getItem('satya_setu_auth');
+
+  if (savedAuth) {
+    try {
+      const authData = JSON.parse(savedAuth);
+
+      if (authData.token) {
+        config.headers.Authorization = `Bearer ${authData.token}`;
+      }
+    } catch {
+      sessionStorage.removeItem('satya_setu_auth');
+    }
+  }
+
+  return config;
+});
+
+
 api.interceptors.response.use(
   (response) => response,
   (error) => (axios.isCancel(error) ? Promise.reject(error) : Promise.reject(toApiError(error))),

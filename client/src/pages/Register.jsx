@@ -3,15 +3,12 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, ArrowRight } from 'lucide-react';
 
-import {
-  registerUser,
-  loginWithGoogle,
-} from '../firebase/auth';
-
+import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/ui/Button';
 
 export default function Register() {
   const navigate = useNavigate();
+  const { register } = useAuth();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -24,8 +21,8 @@ export default function Register() {
     e.preventDefault();
     setError('');
 
-    if (password.length < 6) {
-      setError('Password must contain at least 6 characters.');
+    if (password.length < 8) {
+      setError('Password must contain at least 8 characters.');
       return;
     }
 
@@ -37,24 +34,10 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await registerUser(name.trim(), email.trim(), password);
+      await register(name, email, password);
       navigate('/');
     } catch (err) {
-      setError(getAuthError(err.code));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleRegister = async () => {
-    setError('');
-    setLoading(true);
-
-    try {
-      await loginWithGoogle();
-      navigate('/');
-    } catch (err) {
-      setError(getAuthError(err.code));
+      setError(err.message || 'Unable to create your account.');
     } finally {
       setLoading(false);
     }
@@ -70,11 +53,11 @@ export default function Register() {
           </p>
 
           <h1 className="mt-3 text-3xl font-bold text-midnight">
-            Join our community
+            Create an account
           </h1>
 
           <p className="mt-2 text-sm text-slate-500">
-            Create an account to participate responsibly.
+            Join Satya Setu and become part of the community.
           </p>
         </div>
 
@@ -84,7 +67,7 @@ export default function Register() {
           </p>
         )}
 
-        <form onSubmit={handleRegister} className="space-y-4">
+        <form onSubmit={handleRegister} className="space-y-5">
 
           <div>
             <label htmlFor="name" className="mb-2 block text-sm font-semibold text-midnight">
@@ -101,7 +84,7 @@ export default function Register() {
                 autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Your full name"
+                placeholder="Enter your full name"
                 className="w-full bg-transparent px-3 py-3 text-sm outline-none"
               />
             </div>
@@ -140,11 +123,11 @@ export default function Register() {
                 id="password"
                 type="password"
                 required
-                minLength={6}
+                minLength={8}
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimum 6 characters"
+                placeholder="At least 8 characters"
                 className="w-full bg-transparent px-3 py-3 text-sm outline-none"
               />
             </div>
@@ -177,23 +160,6 @@ export default function Register() {
           </Button>
         </form>
 
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-line" />
-          <span className="text-xs text-slate-400">OR</span>
-          <div className="h-px flex-1 bg-line" />
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          disabled={loading}
-          onClick={handleGoogleRegister}
-        >
-          <span className="font-bold text-lg">G</span>
-          Continue with Google
-        </Button>
-
         <p className="mt-7 text-center text-sm text-slate-500">
           Already have an account?{' '}
           <Link to="/login" className="font-bold text-electric hover:underline">
@@ -204,16 +170,4 @@ export default function Register() {
       </div>
     </main>
   );
-}
-
-function getAuthError(code) {
-  const errors = {
-    'auth/email-already-in-use': 'An account already exists with this email.',
-    'auth/invalid-email': 'Please enter a valid email.',
-    'auth/weak-password': 'Please choose a stronger password.',
-    'auth/popup-closed-by-user': 'Google sign-in was cancelled.',
-    'auth/network-request-failed': 'Network error. Check your connection.',
-  };
-
-  return errors[code] || 'Unable to create your account. Please try again.';
 }
